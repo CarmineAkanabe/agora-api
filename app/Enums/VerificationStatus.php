@@ -2,7 +2,9 @@
 
 namespace App\Enums;
 
-enum VerificationStatus
+enum VerificationStatus: string
 {
-    //
+    case PENDING = 'pending';
+    case APPROVED = 'approved';
+    case REJECTED = 'rejected';
 }

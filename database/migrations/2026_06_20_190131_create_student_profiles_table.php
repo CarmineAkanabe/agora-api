@@ -13,6 +13,20 @@ return new class extends Migration
     {
         Schema::create('student_profiles', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->string('matricule')->unique();
+            $table->string('profile_picture')->nullable()->after('id_card_path');
+            $table->string('school');
+            $table->string('department');
+            $table->string('level');
+            $table->string('phone');
+            $table->string('whatsapp_number');
+            $table->string('id_card_path');
+            // Enum field
+            $table->string('verification_status')->default('pending');
+
+            $table->timestamp('verified_at')->nullable();
+            $table->foreignId('verified_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
         });
     }

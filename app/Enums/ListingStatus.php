@@ -2,7 +2,10 @@
 
 namespace App\Enums;
 
-enum ListingStatus
+enum ListingStatus: string
 {
-    //
+    case ACTIVE = 'active';
+    case PAUSED = 'paused';
+    case SOLD = 'sold';
+    case REMOVED = 'removed';
 }

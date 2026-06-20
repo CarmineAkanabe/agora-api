@@ -13,6 +13,21 @@ return new class extends Migration
     {
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('purchase_request_id')->constrained()->restrictOnDelete();
+            $table->foreignId('buyer_id')->constrained('users')->restrictOnDelete();
+            $table->foreignId('seller_id')->constrained('users')->restrictOnDelete();
+            $table->decimal('amount', 10, 2);
+            $table->string('kpay_payment_id')->nullable();
+            $table->string('kpay_disburse_id')->nullable();
+            // Enum field
+            $table->string('status')->default('initiated');
+            $table->string('payment_method')->nullable();
+
+            $table->string('buyer_phone');
+            $table->string('seller_phone');
+            $table->string('pickup_code', 6)->nullable();
+            $table->timestamp('pickup_code_used_at')->nullable();
+            $table->timestamp('auto_release_at')->nullable();
             $table->timestamps();
         });
     }

@@ -13,6 +13,15 @@ return new class extends Migration
     {
         Schema::create('disputes', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('transaction_id')->constrained()->restrictOnDelete();
+            $table->foreignId('raised_by')->constrained('users')->restrictOnDelete();
+            $table->text('reason');
+            // Enum field
+            $table->string('status')->default('open');
+
+            $table->text('resolution')->nullable();
+            $table->foreignId('resolved_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamp('resolved_at')->nullable();
             $table->timestamps();
         });
     }

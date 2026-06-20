@@ -13,6 +13,9 @@ return new class extends Migration
     {
         Schema::create('listing_images', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('listing_id')->constrained()->cascadeOnDelete();
+            $table->string('path');
+            $table->boolean('is_primary')->default(false);
             $table->timestamps();
         });
     }

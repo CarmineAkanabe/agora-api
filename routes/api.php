@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\VerificationController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ListingController;
+use App\Http\Controllers\ListingImageController;
 use App\Http\Controllers\StudentProfileController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -50,5 +51,11 @@ Route::middleware(['auth:sanctum', 'verified.student'])->group(function () {
     Route::post('listings/{listing}/update', [ListingController::class, 'update']);
     Route::delete('listings/{listing}', [ListingController::class, 'destroy']);
     Route::post('listings/{listing}/toggle-status', [ListingController::class, 'toggleStatus']);
+
+    Route::prefix('listings/{listing}/images')->group(function () {
+        Route::post('/', [ListingImageController::class, 'store']);
+        Route::delete('/{image}', [ListingImageController::class, 'destroy']);
+        Route::post('/{image}/primary', [ListingImageController::class, 'setPrimary']);
+    });
 
 });

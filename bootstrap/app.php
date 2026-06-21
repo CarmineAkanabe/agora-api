@@ -17,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->prepend(ForceJsonResponse::class);
         $middleware->alias([
             'verified.student' => \App\Http\Middleware\EnsureStudentIsVerified::class,
+            'check.banned'     => \App\Http\Middleware\CheckIfBanned::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

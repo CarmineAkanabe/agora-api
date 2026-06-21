@@ -22,23 +22,19 @@ class ListingController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $cacheKey = 'listings:' . md5($request->getQueryString() ?? 'all');
+        $listings = QueryBuilder::for(Listing::class)
+        ->allowedFilters(
+            AllowedFilter::exact('category_id'),
+            AllowedFilter::exact('condition'),
+            AllowedFilter::scope('price_between'),
+            AllowedFilter::partial('title'),
+        )
+        ->allowedSorts('price', 'created_at')
+        ->where('status', ListingStatus::ACTIVE)
+        ->with(['primaryImage', 'category', 'seller'])
+        ->paginate(12);
 
-        $listings = Cache::tags(['listings'])->remember($cacheKey, now()->addMinutes(10), function () {
-            return QueryBuilder::for(Listing::class)
-                ->allowedFilters(
-                    AllowedFilter::exact('category_id'),
-                    AllowedFilter::exact('condition'),
-                    AllowedFilter::scope('price_between'),
-                    AllowedFilter::partial('title'),
-                )
-                ->allowedSorts('price', 'created_at')
-                ->where('status', ListingStatus::ACTIVE)
-                ->with(['primaryImage', 'category', 'seller'])
-                ->paginate(12);
-        });
-
-        return response()->json(new ListingCollection($listings));
+    return response()->json(new ListingCollection($listings));
     }
 
     public function show(Listing $listing): JsonResponse

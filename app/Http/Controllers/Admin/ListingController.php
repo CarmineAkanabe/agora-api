@@ -3,9 +3,29 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Http\Requests\Admin\ModerateListingRequest;
+use App\Http\Resources\ListingCollection;
+use App\Models\Listing;
+use App\Services\ListingService;
+use Illuminate\Http\JsonResponse;
 
 class ListingController extends Controller
 {
-    //
+    public function __construct(protected ListingService $listingService) {}
+
+    public function index(): JsonResponse
+    {
+        $listings = Listing::with(['seller', 'category', 'primaryImage'])
+            ->latest()
+            ->paginate(20);
+
+        return response()->json(new ListingCollection($listings));
+    }
+
+    public function remove(ModerateListingRequest $request, Listing $listing): JsonResponse
+    {
+        $this->listingService->destroy($listing);
+
+        return response()->json(['message' => 'Listing removed successfully.']);
+    }
 }

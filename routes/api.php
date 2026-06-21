@@ -1,5 +1,9 @@
 <?php
 
+use App\Http\Controllers\Admin\ReportController;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\ListingController as AdminListingController;
+use App\Http\Controllers\Admin\DisputeController as AdminDisputeController;
 use App\Http\Controllers\Admin\VerificationController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DisputeController;
@@ -21,6 +25,13 @@ Route::get('listings', [ListingController::class, 'index']);
 Route::get('listings/{listing}', [ListingController::class, 'show']);
 Route::get('sellers/{user}', [ListingController::class, 'sellerListings']);
 
+Route::middleware('check.banned')->group(function () {
+    Route::get('listings', [ListingController::class, 'index']);
+    Route::get('listings/{listing}', [ListingController::class, 'show']);
+    Route::get('sellers/{user}', [ListingController::class, 'sellerListings']);
+    Route::get('categories', [CategoryController::class, 'index']);
+});
+
 // Authentication routes
 Route::prefix('auth')->group(function () {
     Route::post('register', [AuthController::class, 'register']);
@@ -37,15 +48,35 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     Route::prefix('admin')->middleware('can:isAdmin')->group(function () {
+        // Student Verification
         Route::get('verifications', [VerificationController::class, 'index']);
         Route::get('verifications/{profile}', [VerificationController::class, 'show']);
         Route::post('verifications/{profile}/approve', [VerificationController::class, 'approve']);
         Route::post('verifications/{profile}/reject', [VerificationController::class, 'reject']);
-
+        // Categories
         Route::get('categories', [CategoryController::class, 'index']);
         Route::post('categories', [CategoryController::class, 'store']);
         Route::put('categories/{category}', [CategoryController::class, 'update']);
         Route::delete('categories/{category}', [CategoryController::class, 'destroy']);
+
+        // Users
+        Route::get('users', [UserController::class, 'index']);
+        Route::get('users/{user}', [UserController::class, 'show']);
+        Route::post('users/{user}/ban', [UserController::class, 'ban']);
+        Route::post('users/{user}/unban', [UserController::class, 'unban']);
+
+        // Listings
+        Route::get('listings', [AdminListingController::class, 'index']);
+        Route::post('listings/{listing}/remove', [AdminListingController::class, 'remove']);
+
+        // Disputes
+        Route::get('disputes', [AdminDisputeController::class, 'index']);
+        Route::get('disputes/{dispute}', [AdminDisputeController::class, 'show']);
+        Route::post('disputes/{dispute}/resolve', [AdminDisputeController::class, 'resolve']);
+        Route::post('disputes/{dispute}/close', [AdminDisputeController::class, 'close']);
+
+        // Reports
+        Route::get('reports', [ReportController::class, 'index']);
     });
 
 });

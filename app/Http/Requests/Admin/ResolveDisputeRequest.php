@@ -12,7 +12,7 @@ class ResolveDisputeRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -23,7 +23,7 @@ class ResolveDisputeRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'resolution' => ['required', 'string', 'max:1000']
         ];
     }
 }

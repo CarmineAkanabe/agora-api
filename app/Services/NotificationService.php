@@ -3,7 +3,9 @@
 namespace App\Services;
 
 use App\Models\User;
+use App\Notifications\AccountBannedNotification;
 use App\Notifications\DisputeRaisedNotification;
+use App\Notifications\DisputeResolvedNotification;
 use App\Notifications\EscrowReleasedNotification;
 use App\Notifications\PaymentFailedNotification;
 use App\Notifications\PaymentHeldNotification;
@@ -67,5 +69,16 @@ class NotificationService
     public function disputeRaised(User $otherParty, string $reason): void
     {
         $otherParty->notify(new DisputeRaisedNotification($reason));
+    }
+
+    public function accountBanned(User $user): void
+    {
+        $user->notify(new AccountBannedNotification());
+    }
+
+    public function disputeResolved(User $buyer, User $seller, string $resolution): void
+    {
+        $buyer->notify(new DisputeResolvedNotification($resolution));
+        $seller->notify(new DisputeResolvedNotification($resolution));
     }
 }

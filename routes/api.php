@@ -6,6 +6,7 @@ use App\Http\Controllers\ListingController;
 use App\Http\Controllers\ListingImageController;
 use App\Http\Controllers\PurchaseRequestController;
 use App\Http\Controllers\StudentProfileController;
+use App\Http\Controllers\TransactionController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
@@ -67,6 +68,12 @@ Route::middleware(['auth:sanctum', 'verified.student'])->group(function () {
         Route::post('/{purchaseRequest}/approve', [PurchaseRequestController::class, 'approve']);
         Route::post('/{purchaseRequest}/reject', [PurchaseRequestController::class, 'reject']);
         Route::post('/{purchaseRequest}/cancel', [PurchaseRequestController::class, 'cancel']);
+    });
+
+    Route::prefix('transactions')->group(function () {
+        Route::post('/', [TransactionController::class, 'store']);
+        Route::get('/', [TransactionController::class, 'index']);
+        Route::get('/{transaction}', [TransactionController::class, 'show']);
     });
 
 });

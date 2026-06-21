@@ -2,8 +2,10 @@
 
 namespace App\Http\Requests\Transactions;
 
+use App\Enums\PaymentMethod;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class InitiatePaymentRequest extends FormRequest
 {
@@ -12,7 +14,7 @@ class InitiatePaymentRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -23,7 +25,9 @@ class InitiatePaymentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'purchase_request_id' => ['required', 'exists:purchase_requests,id'],
+            'payment_method'      => ['required', Rule::enum(PaymentMethod::class)],
+            'buyer_phone'         => ['required', 'string']
         ];
     }
 }

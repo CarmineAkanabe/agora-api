@@ -12,7 +12,7 @@ class StorePurchaseRequestRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -23,7 +23,11 @@ class StorePurchaseRequestRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'listing_id'       => ['required', 'exists:listings,id'],
+            'quantity'         => ['required', 'integer', 'min:1'],
+            'meeting_location' => ['required', 'string', 'max:255'],
+            'whatsapp_number'  => ['required', 'string'],
+            'message'          => ['nullable', 'string', 'max:500']
         ];
     }
 }

@@ -1,12 +1,15 @@
+{{-- resources/views/emails/verification/approved.blade.php --}}
 <x-mail::message>
-# Introduction
+# Welcome to Agora, {{ $user->name }}
 
-The body of your message.
+Your student profile has been verified successfully.
 
-<x-mail::button :url="''">
-Button Text
+You can now browse listings, post items for sale, and make purchases on Agora.
+
+<x-mail::button :url="'http://localhost:5173/login'">
+Go to Agora
 </x-mail::button>
 
-Thanks,<br>
-{{ config('app.name') }}
+Thanks,
+The Agora Team
 </x-mail::message>

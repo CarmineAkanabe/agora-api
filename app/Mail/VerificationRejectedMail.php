@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
@@ -17,10 +18,10 @@ class VerificationRejectedMail extends Mailable
     /**
      * Create a new message instance.
      */
-    public function __construct()
-    {
-        //
-    }
+    public function __construct(
+        public readonly User $user,
+        public readonly ?string $reason = null
+    )   {}
 
     /**
      * Get the message envelope.
@@ -28,7 +29,7 @@ class VerificationRejectedMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Verification Rejected Mail',
+            subject: 'Your Agora Verification Was Rejected',
         );
     }
 

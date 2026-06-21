@@ -9,15 +9,10 @@ use Illuminate\Notifications\Notification;
 
 class VerificationApprovedNotification extends Notification
 {
-    use Queueable;
-
     /**
      * Create a new notification instance.
      */
-    public function __construct()
-    {
-        //
-    }
+    public function __construct() {}
 
     /**
      * Get the notification's delivery channels.
@@ -26,19 +21,19 @@ class VerificationApprovedNotification extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        return ['database'];
     }
 
     /**
      * Get the mail representation of the notification.
      */
-    public function toMail(object $notifiable): MailMessage
-    {
-        return (new MailMessage)
-            ->line('The introduction to the notification.')
-            ->action('Notification Action', url('/'))
-            ->line('Thank you for using our application!');
-    }
+    // public function toMail(object $notifiable): MailMessage
+    // {
+    //     return (new MailMessage)
+    //         ->line('The introduction to the notification.')
+    //         ->action('Notification Action', url('/'))
+    //         ->line('Thank you for using our application!');
+    // }
 
     /**
      * Get the array representation of the notification.
@@ -48,7 +43,8 @@ class VerificationApprovedNotification extends Notification
     public function toArray(object $notifiable): array
     {
         return [
-            //
+            'type'    => 'verification_approved',
+            'message' => 'Your student profile has been verified. You can now use Agora.',
         ];
     }
 }

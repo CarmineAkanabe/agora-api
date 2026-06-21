@@ -19,7 +19,7 @@ class PaymentService
     /**
      * Create a new class instance.
      */
-    public function __construct()
+    public function __construct(protected NotificationService $notificationService)
     {
         $this->baseUrl = config('services.kpay.base_url');
         $this->secret  = config('services.kpay.secret');
@@ -53,7 +53,9 @@ class PaymentService
             'seller_phone'        => $sellerPhone,
         ]);
 
-        $purchaseRequest->buyer->notify(new PaymentInitiatedNotification());
+        $this->notificationService->paymentInitiated($purchaseRequest->buyer);
+
+        // $purchaseRequest->buyer->notify(new PaymentInitiatedNotification());
 
         return $transaction;
     }
@@ -87,6 +89,8 @@ class PaymentService
     public function markFailed(Transaction $transaction): void
     {
         $transaction->update(['status' => TransactionStatus::FAILED]);
-        $transaction->buyer->notify(new PaymentFailedNotification());
+
+        $this->notificationService->paymentFailed($transaction->buyer);
+        // $transaction->buyer->notify(new PaymentFailedNotification());
     }
 }

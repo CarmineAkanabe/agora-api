@@ -16,7 +16,7 @@ class StudentVerificationService
     /**
      * Create a new class instance.
      */
-    public function __construct() {}
+    public function __construct(protected NotificationService $notificationService) {}
 
     public function createOrUpdateProfile(User $user, array $data): StudentProfile
     {
@@ -54,7 +54,9 @@ class StudentVerificationService
             'verified_by'         => $admin->id,
         ]);
 
-        $profile->user->notify(new VerificationApprovedNotification());
+        $this->notificationService->verificationApproved($profile->user);
+
+        // $profile->user->notify(new VerificationApprovedNotification());
         Mail::to($profile->user->email)->queue(new VerificationApprovedMail($profile->user));
     }
 
@@ -66,7 +68,9 @@ class StudentVerificationService
             'verified_by'         => $admin->id,
         ]);
 
-        $profile->user->notify(new VerificationRejectedNotification($reason));
+        $this->notificationService->verificationRejected($profile->user, $reason);
+
+        // $profile->user->notify(new VerificationRejectedNotification($reason));
         Mail::to($profile->user->email)->queue(new VerificationRejectedMail($profile->user, $reason));
     }
 }

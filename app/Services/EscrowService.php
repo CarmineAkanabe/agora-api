@@ -13,7 +13,7 @@ class EscrowService
     /**
      * Create a new class instance.
      */
-    public function __construct(protected PickupCodeService $pickupCodeService) {}
+    public function __construct(protected PickupCodeService $pickupCodeService, protected NotificationService $notificationService) {}
 
     public function hold(Transaction $transaction): void
     {
@@ -27,8 +27,10 @@ class EscrowService
             'status' => RequestStatus::PAID,
         ]);
 
-        $transaction->buyer->notify(new PaymentHeldNotification());
-        $transaction->seller->notify(new PaymentHeldNotification());
+        $this->notificationService->paymentHeld($transaction->buyer, $transaction->seller);
+
+        // $transaction->buyer->notify(new PaymentHeldNotification());
+        // $transaction->seller->notify(new PaymentHeldNotification());
     }
 
     public function release(Transaction $transaction): void
@@ -42,8 +44,10 @@ class EscrowService
             'status' => RequestStatus::COMPLETED,
         ]);
 
-        $transaction->buyer->notify(new EscrowReleasedNotification());
-        $transaction->seller->notify(new EscrowReleasedNotification());
+        $this->notificationService->escrowReleased($transaction->buyer, $transaction->seller);
+
+        // $transaction->buyer->notify(new EscrowReleasedNotification());
+        // $transaction->seller->notify(new EscrowReleasedNotification());
     }
 
     public function refund(Transaction $transaction): void

@@ -16,7 +16,7 @@ class PurchaseRequestService
     /**
      * Create a new class instance.
      */
-    public function __construct()   {}
+    public function __construct(protected NotificationService $notificationService)   {}
 
     public function store(User $buyer, array $data): PurchaseRequest
     {
@@ -85,7 +85,9 @@ class PurchaseRequestService
             'expires_at' => now()->addHours(2),
         ]);
 
-        $purchaseRequest->buyer->notify(new PurchaseRequestApprovedNotification());
+        $this->notificationService->requestApproved($purchaseRequest->buyer);
+
+        // $purchaseRequest->buyer->notify(new PurchaseRequestApprovedNotification());
 
         return $purchaseRequest;
     }
@@ -106,9 +108,10 @@ class PurchaseRequestService
 
         $purchaseRequest->update(['status' => RequestStatus::REJECTED]);
 
-        $purchaseRequest->buyer->notify(
-            new PurchaseRequestRejectedNotification($reason)
-        );
+        $this->notificationService->requestRejected($purchaseRequest->buyer, $reason);
+        // $purchaseRequest->buyer->notify(
+        //     new PurchaseRequestRejectedNotification($reason)
+        // );
 
         return $purchaseRequest;
     }

@@ -7,13 +7,17 @@ use App\Http\Resources\TransactionResource;
 use App\Jobs\DisbursePaymentJob;
 use App\Models\Transaction;
 use App\Notifications\PickupCodeVerifiedNotification;
+use App\Services\NotificationService;
 use App\Services\PickupCodeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class PickupCodeController extends Controller
 {
-    public function __construct(protected PickupCodeService $pickupCodeService) {}
+    public function __construct(
+        protected PickupCodeService $pickupCodeService,
+        protected NotificationService $notificationService
+        ) {}
 
     public function verify(EnterPickupCodeRequest $request, Transaction $transaction): JsonResponse
     {
@@ -29,8 +33,10 @@ class PickupCodeController extends Controller
             return response()->json(['message' => 'Invalid or already used pickup code.'], 422);
         }
 
-        $transaction->buyer->notify(new PickupCodeVerifiedNotification());
-        $transaction->seller->notify(new PickupCodeVerifiedNotification());
+        $this->notificationService->pickupCodeVerified($transaction->buyer, $transaction->seller);
+
+        // $transaction->buyer->notify(new PickupCodeVerifiedNotification());
+        // $transaction->seller->notify(new PickupCodeVerifiedNotification());
 
         DisbursePaymentJob::dispatch($transaction);
 

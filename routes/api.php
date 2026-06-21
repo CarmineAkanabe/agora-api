@@ -2,10 +2,13 @@
 
 use App\Http\Controllers\Admin\VerificationController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\DisputeController;
 use App\Http\Controllers\ListingController;
 use App\Http\Controllers\ListingImageController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PickupCodeController;
 use App\Http\Controllers\PurchaseRequestController;
+use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\StudentProfileController;
 use App\Http\Controllers\TransactionController;
 use Illuminate\Http\Request;
@@ -78,5 +81,23 @@ Route::middleware(['auth:sanctum', 'verified.student'])->group(function () {
     });
 
     Route::post('transactions/{transaction}/verify-code', [PickupCodeController::class, 'verify']);
+
+    Route::prefix('reviews')->group(function () {
+        Route::post('/', [ReviewController::class, 'store']);
+        Route::get('/seller/{user}', [ReviewController::class, 'sellerReviews']);
+    });
+
+    Route::prefix('disputes')->group(function () {
+        Route::post('/', [DisputeController::class, 'store']);
+        Route::get('/', [DisputeController::class, 'index']);
+        Route::get('/{dispute}', [DisputeController::class, 'show']);
+    });
+
+    Route::prefix('notifications')->group(function () {
+        Route::get('/', [NotificationController::class, 'index']);
+        Route::post('/{notification}/read', [NotificationController::class, 'markAsRead']);
+        Route::post('/read-all', [NotificationController::class, 'markAllAsRead']);
+        Route::delete('/{notification}', [NotificationController::class, 'destroy']);
+    });
 
 });

@@ -12,7 +12,7 @@ class StoreDisputeRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -23,7 +23,8 @@ class StoreDisputeRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'transaction_id' => ['required', 'exists:transactions,id'],
+            'reason'         => ['required', 'string', 'max:1000'],
         ];
     }
 }

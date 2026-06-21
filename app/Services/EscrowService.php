@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\RequestStatus;
 use App\Enums\TransactionStatus;
 use App\Models\Transaction;
+use App\Notifications\EscrowReleasedNotification;
 use App\Notifications\PaymentHeldNotification;
 
 class EscrowService
@@ -40,6 +41,9 @@ class EscrowService
         $transaction->purchaseRequest->update([
             'status' => RequestStatus::COMPLETED,
         ]);
+
+        $transaction->buyer->notify(new EscrowReleasedNotification());
+        $transaction->seller->notify(new EscrowReleasedNotification());
     }
 
     public function refund(Transaction $transaction): void

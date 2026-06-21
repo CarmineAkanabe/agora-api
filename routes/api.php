@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\VerificationController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ListingController;
 use App\Http\Controllers\ListingImageController;
+use App\Http\Controllers\PickupCodeController;
 use App\Http\Controllers\PurchaseRequestController;
 use App\Http\Controllers\StudentProfileController;
 use App\Http\Controllers\TransactionController;
@@ -75,5 +76,7 @@ Route::middleware(['auth:sanctum', 'verified.student'])->group(function () {
         Route::get('/', [TransactionController::class, 'index']);
         Route::get('/{transaction}', [TransactionController::class, 'show']);
     });
+
+    Route::post('transactions/{transaction}/verify-code', [PickupCodeController::class, 'verify']);
 
 });

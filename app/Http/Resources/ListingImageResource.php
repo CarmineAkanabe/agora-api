@@ -14,6 +14,10 @@ class ListingImageResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return parent::toArray($request);
+        return [
+            'id'         => $this->id,
+            'url'        => asset('storage/' . $this->path),
+            'is_primary' => $this->is_primary
+        ];
     }
 }

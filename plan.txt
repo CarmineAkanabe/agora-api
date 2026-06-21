@@ -1,0 +1,64 @@
+Build Phases
+Phase 1 — Migrations
+
+All tables in dependency order.
+Phase 2 — Enums
+
+All enum classes.
+Phase 3 — Models
+
+Relationships, casts, fillable.
+Phase 4 — Seeders & Factories
+
+Admin, categories, students, products.
+Phase 5 — Authentication
+
+Register, login, logout via Sanctum.
+Phase 6 — Student Profile & Verification
+
+Profile creation, ID card upload, admin approval.
+Phase 7 — Categories
+
+Admin CRUD.
+Phase 8 — Products
+
+CRUD, image upload, search & filter.
+Phase 9 — Purchase Requests
+
+Submit, approve, reject, expiry job.
+Phase 10 — Payments & Escrow
+
+K-PAY collect, polling job, escrow hold.
+Phase 11 — Pickup Code
+
+Generate, verify, trigger disburse.
+Phase 12 — Disburse
+
+K-PAY payout to seller after code.
+Phase 13 — Reviews
+
+Post-transaction ratings.
+Phase 14 — Disputes
+
+Raise, admin resolves.
+Phase 15 — Notifications
+
+Database notifications throughout all flows.
+Phase 16 — Admin Panel
+
+Verifications, users, products, disputes.
+Phase 17 — Reports & Dashboard Stats
+
+Aggregated data for charts.
+Phase 18 — Policies & Gates
+
+Authorization layer.
+Phase 19 — Middleware & Rate Limiting
+
+ForceJsonResponse, EnsureStudentIsVerified, limiters.
+Phase 20 — Redis Caching
+
+Categories, product browsing, dashboard stats.
+Phase 21 — Task Scheduler
+
+Expire stale requests, auto-release escrow.

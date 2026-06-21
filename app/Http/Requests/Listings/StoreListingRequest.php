@@ -2,8 +2,10 @@
 
 namespace App\Http\Requests\Listings;
 
+use App\Enums\ListingCondition;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreListingRequest extends FormRequest
 {
@@ -12,7 +14,7 @@ class StoreListingRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -23,7 +25,15 @@ class StoreListingRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'category_id'  => ['required', 'exists:categories,id'],
+            'title'        => ['required', 'string', 'max:255'],
+            'description'  => ['required', 'string'],
+            'price'        => ['required', 'numeric', 'min:1'],
+            'quantity'     => ['required', 'integer', 'min:1'],
+            'condition'    => ['required', Rule::enum(ListingCondition::class)],
+            'images'       => ['required', 'array', 'min:1', 'max:5'],
+            'images.*'     => ['image', 'max:2048'],
+            'primary_image'=> ['required', 'integer', 'min:0', 'max:4']
         ];
     }
 }

@@ -58,4 +58,16 @@ class Listing extends Model
     {
         return $this->hasMany(PurchaseRequest::class);
     }
+
+    public function scopePriceBetween($query, string $value)
+    {
+        $parts = explode(',', $value);
+
+        if (count($parts) !== 2) {
+            return $query;
+        }
+
+        [$min, $max] = $parts;
+        return $query->whereBetween('price', [(float)$min, (float)$max]);
+    }
 }

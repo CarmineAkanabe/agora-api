@@ -7,6 +7,7 @@ use App\Enums\TransactionStatus;
 use App\Models\Transaction;
 use App\Notifications\EscrowReleasedNotification;
 use App\Notifications\PaymentHeldNotification;
+use Cache;
 
 class EscrowService
 {
@@ -43,6 +44,11 @@ class EscrowService
         $transaction->purchaseRequest->update([
             'status' => RequestStatus::COMPLETED,
         ]);
+
+        Cache::forget("reports:student:{$transaction->buyer_id}");
+        Cache::forget("reports:student:{$transaction->seller_id}");
+        Cache::forget('reports:overview');
+        Cache::forget('reports:transactions');
 
         $this->notificationService->escrowReleased($transaction->buyer, $transaction->seller);
 

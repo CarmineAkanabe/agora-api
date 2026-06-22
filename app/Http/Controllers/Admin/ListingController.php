@@ -7,6 +7,7 @@ use App\Http\Requests\Admin\ModerateListingRequest;
 use App\Http\Resources\ListingCollection;
 use App\Models\Listing;
 use App\Services\ListingService;
+use Cache;
 use Illuminate\Http\JsonResponse;
 
 class ListingController extends Controller
@@ -25,6 +26,9 @@ class ListingController extends Controller
     public function remove(ModerateListingRequest $request, Listing $listing): JsonResponse
     {
         $this->listingService->destroy($listing);
+
+        Cache::forget('reports:overview');
+        Cache::forget('reports:listings');
 
         return response()->json(['message' => 'Listing removed successfully.']);
     }

@@ -87,7 +87,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Auth + verified students only
 Route::middleware(['auth:sanctum', 'verified.student'])->group(function () {
 
-    Route::post('listings', [ListingController::class, 'store']);
+    // Route::post('listings', [ListingController::class, 'store']);
     Route::post('listings/{listing}/update', [ListingController::class, 'update']);
     Route::delete('listings/{listing}', [ListingController::class, 'destroy']);
     Route::post('listings/{listing}/toggle-status', [ListingController::class, 'toggleStatus']);
@@ -109,7 +109,7 @@ Route::middleware(['auth:sanctum', 'verified.student'])->group(function () {
     });
 
     Route::prefix('transactions')->group(function () {
-        Route::post('/', [TransactionController::class, 'store']);
+        // Route::post('/', [TransactionController::class, 'store']);
         Route::get('/', [TransactionController::class, 'index']);
         Route::get('/{transaction}', [TransactionController::class, 'show']);
     });
@@ -138,3 +138,11 @@ Route::middleware(['auth:sanctum', 'verified.student'])->group(function () {
     Route::get('dashboard/stats', [ReportController::class, 'studentStats']);
 
 });
+
+// Payment route gets strict limiter
+Route::middleware(['auth:sanctum', 'verified.student', 'throttle:payment'])
+    ->post('transactions', [TransactionController::class, 'store']);
+
+// Listing creation
+Route::middleware(['auth:sanctum', 'verified.student', 'throttle:listing-create'])
+    ->post('listings', [ListingController::class, 'store']);

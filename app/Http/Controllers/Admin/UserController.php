@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use App\Services\NotificationService;
+use Cache;
 use Illuminate\Http\JsonResponse;
 
 class UserController extends Controller
@@ -41,6 +42,9 @@ class UserController extends Controller
         $user->update(['is_banned' => true]);
         $this->notificationService->accountBanned($user);
 
+        Cache::forget('reports:overview');
+        Cache::forget('reports:users');
+
         return response()->json(['message' => 'User banned successfully.']);
     }
 
@@ -51,6 +55,9 @@ class UserController extends Controller
         }
 
         $user->update(['is_banned' => false]);
+
+        Cache::forget('reports:overview');
+        Cache::forget('reports:users');
 
         return response()->json(['message' => 'User unbanned successfully.']);
     }

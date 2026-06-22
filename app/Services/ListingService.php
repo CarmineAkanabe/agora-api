@@ -54,6 +54,8 @@ class ListingService
         }
 
         Cache::tags(['listings'])->flush();
+        Cache::forget("listing:{$listing->id}");
+        Cache::forget("seller:{$listing->user_id}:listings");
 
         return $listing->load(['images', 'category', 'seller']);
     }
@@ -66,7 +68,10 @@ class ListingService
         });
 
         $listing->delete();
+        
         Cache::tags(['listings'])->flush();
+        Cache::forget("listing:{$listing->id}");
+        Cache::forget("seller:{$listing->user_id}:listings");
     }
 
     public function toggleStatus(Listing $listing): Listing
@@ -76,7 +81,10 @@ class ListingService
             : ListingStatus::ACTIVE;
 
         $listing->update(['status' => $newStatus]);
+
         Cache::tags(['listings'])->flush();
+        Cache::forget("listing:{$listing->id}");
+        Cache::forget("seller:{$listing->user_id}:listings");
 
         return $listing;
     }

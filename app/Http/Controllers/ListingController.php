@@ -39,17 +39,26 @@ class ListingController extends Controller
 
     public function show(Listing $listing): JsonResponse
     {
-        $listing->load(['images', 'category', 'seller.studentProfile']);
+        $listing = Cache::remember(
+            "listing:{$listing->id}",
+            now()->addMinutes(10),
+            fn() => $listing->load(['images', 'category', 'seller.studentProfile'])
+        );
+        
         return response()->json(new ListingResource($listing));
     }
 
     public function sellerListings(User $user): JsonResponse
     {
-        $listings = $user->listings()
-            ->where('status', ListingStatus::ACTIVE)
-            ->with(['primaryImage', 'category'])
-            ->latest()
-            ->get();
+        $listings = Cache::remember(
+            "seller:{$user->id}:listings",
+            now()->addMinutes(10),
+            fn() => $user->listings()
+                ->where('status', ListingStatus::ACTIVE)
+                ->with(['primaryImage', 'category'])
+                ->latest()
+                ->get()
+        );
 
         return response()->json(ListingResource::collection($listings));
     }

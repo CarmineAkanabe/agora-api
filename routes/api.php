@@ -76,7 +76,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('disputes/{dispute}/close', [AdminDisputeController::class, 'close']);
 
         // Reports
-        Route::get('reports', [ReportController::class, 'index']);
+        Route::get('reports/overview', [ReportController::class, 'overview']);
+        Route::get('reports/transactions', [ReportController::class, 'transactions']);
+        Route::get('reports/listings', [ReportController::class, 'listings']);
+        Route::get('reports/users', [ReportController::class, 'users']);
     });
 
 });
@@ -130,5 +133,8 @@ Route::middleware(['auth:sanctum', 'verified.student'])->group(function () {
         Route::post('/read-all', [NotificationController::class, 'markAllAsRead']);
         Route::delete('/{notification}', [NotificationController::class, 'destroy']);
     });
+
+    //Student Dashboard
+    Route::get('dashboard/stats', [ReportController::class, 'studentStats']);
 
 });

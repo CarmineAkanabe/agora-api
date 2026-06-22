@@ -68,12 +68,7 @@ class TransactionController extends Controller
 
     public function show(Request $request, Transaction $transaction): JsonResponse
     {
-        if (
-            $request->user()->id !== $transaction->buyer_id &&
-            $request->user()->id !== $transaction->seller_id
-        ) {
-            return response()->json(['message' => 'Unauthorized.'], 403);
-        }
+        $this->authorize('view', $transaction);
 
         $transaction->load(['purchaseRequest.listing', 'buyer', 'seller']);
         return response()->json(new TransactionResource($transaction));

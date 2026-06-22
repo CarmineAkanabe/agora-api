@@ -21,9 +21,7 @@ class PickupCodeController extends Controller
 
     public function verify(EnterPickupCodeRequest $request, Transaction $transaction): JsonResponse
     {
-        if ($request->user()->id !== $transaction->seller_id) {
-            return response()->json(['message' => 'Only the seller can verify the pickup code.'], 403);
-        }
+        $this->authorize('verifyCode', $transaction);
 
         if ($transaction->status->value !== 'held') {
             return response()->json(['message' => 'Transaction is not in escrow.'], 422);

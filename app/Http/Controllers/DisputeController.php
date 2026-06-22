@@ -42,12 +42,7 @@ class DisputeController extends Controller
     {
         $transaction = $dispute->transaction;
 
-        if (
-            $request->user()->id !== $transaction->buyer_id &&
-            $request->user()->id !== $transaction->seller_id
-        ) {
-            return response()->json(['message' => 'Unauthorized.'], 403);
-        }
+        $this->authorize('view', $dispute);
 
         $dispute->load(['transaction', 'raisedBy', 'resolvedBy']);
         return response()->json(new DisputeResource($dispute));

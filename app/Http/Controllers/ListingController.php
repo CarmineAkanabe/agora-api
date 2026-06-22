@@ -66,9 +66,10 @@ class ListingController extends Controller
 
     public function update(UpdateListingRequest $request, Listing $listing): JsonResponse
     {
-        if ($request->user()->id !== $listing->user_id) {
-            return response()->json(['message' => 'Unauthorized.'], 403);
-        }
+        $this->authorize('update', $listing);
+        // if ($request->user()->id !== $listing->user_id) {
+        //     return response()->json(['message' => 'Unauthorized.'], 403);
+        // }
 
         $listing = $this->listingService->update($listing, $request->validated());
         return response()->json(new ListingResource($listing));
@@ -76,9 +77,10 @@ class ListingController extends Controller
 
     public function destroy(Request $request, Listing $listing): JsonResponse
     {
-        if ($request->user()->id !== $listing->user_id) {
-            return response()->json(['message' => 'Unauthorized.'], 403);
-        }
+        $this->authorize('delete', $listing);
+        // if ($request->user()->id !== $listing->user_id) {
+        //     return response()->json(['message' => 'Unauthorized.'], 403);
+        // }
 
         $this->listingService->destroy($listing);
         return response()->json(['message' => 'Listing deleted.']);
@@ -86,9 +88,10 @@ class ListingController extends Controller
 
     public function toggleStatus(Request $request, Listing $listing): JsonResponse
     {
-        if ($request->user()->id !== $listing->user_id) {
-            return response()->json(['message' => 'Unauthorized.'], 403);
-        }
+        $this->authorize('toggleStatus', $listing);
+        // if ($request->user()->id !== $listing->user_id) {
+        //     return response()->json(['message' => 'Unauthorized.'], 403);
+        // }
 
         $listing = $this->listingService->toggleStatus($listing);
         return response()->json(new ListingResource($listing));

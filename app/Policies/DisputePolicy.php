@@ -2,65 +2,26 @@
 
 namespace App\Policies;
 
+use App\Enums\TransactionStatus;
 use App\Models\Dispute;
+use App\Models\Transaction;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
 class DisputePolicy
 {
-    /**
-     * Determine whether the user can view any models.
-     */
-    public function viewAny(User $user): bool
+    public function create(User $user, Transaction $transaction): bool
     {
-        return false;
+        return (
+            $user->id === $transaction->buyer_id ||
+            $user->id === $transaction->seller_id
+        ) &&
+        $transaction->status === TransactionStatus::HELD &&
+        !$transaction->dispute()->exists();
     }
 
-    /**
-     * Determine whether the user can view the model.
-     */
     public function view(User $user, Dispute $dispute): bool
     {
-        return false;
-    }
-
-    /**
-     * Determine whether the user can create models.
-     */
-    public function create(User $user): bool
-    {
-        return false;
-    }
-
-    /**
-     * Determine whether the user can update the model.
-     */
-    public function update(User $user, Dispute $dispute): bool
-    {
-        return false;
-    }
-
-    /**
-     * Determine whether the user can delete the model.
-     */
-    public function delete(User $user, Dispute $dispute): bool
-    {
-        return false;
-    }
-
-    /**
-     * Determine whether the user can restore the model.
-     */
-    public function restore(User $user, Dispute $dispute): bool
-    {
-        return false;
-    }
-
-    /**
-     * Determine whether the user can permanently delete the model.
-     */
-    public function forceDelete(User $user, Dispute $dispute): bool
-    {
-        return false;
+        return $user->id === $dispute->transaction->buyer_id ||
+               $user->id === $dispute->transaction->seller_id;
     }
 }

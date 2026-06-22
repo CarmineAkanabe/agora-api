@@ -13,9 +13,10 @@ class ListingImageController extends Controller
 {
     public function store(Request $request, Listing $listing): JsonResponse
     {
-        if ($request->user()->id !== $listing->user_id) {
-            return response()->json(['message' => 'Unauthorized.'], 403);
-        }
+        $this->authorize('addImages', $listing);
+        // if ($request->user()->id !== $listing->user_id) {
+        //     return response()->json(['message' => 'Unauthorized.'], 403);
+        // }
 
         $request->validate([
             'images'   => ['required', 'array', 'min:1'],
@@ -44,9 +45,10 @@ class ListingImageController extends Controller
 
     public function destroy(Request $request, Listing $listing, ListingImage $image): JsonResponse
     {
-        if ($request->user()->id !== $listing->user_id) {
-            return response()->json(['message' => 'Unauthorized.'], 403);
-        }
+        $this->authorize('deleteImage', $listing);
+        // if ($request->user()->id !== $listing->user_id) {
+        //     return response()->json(['message' => 'Unauthorized.'], 403);
+        // }
 
         if ($image->listing_id !== $listing->id) {
             return response()->json(['message' => 'Image does not belong to this listing.'], 422);
@@ -70,9 +72,10 @@ class ListingImageController extends Controller
 
     public function setPrimary(Request $request, Listing $listing, ListingImage $image): JsonResponse
     {
-        if ($request->user()->id !== $listing->user_id) {
-            return response()->json(['message' => 'Unauthorized.'], 403);
-        }
+        $this->authorize('addImages', $listing);
+        // if ($request->user()->id !== $listing->user_id) {
+        //     return response()->json(['message' => 'Unauthorized.'], 403);
+        // }
 
         if ($image->listing_id !== $listing->id) {
             return response()->json(['message' => 'Image does not belong to this listing.'], 422);

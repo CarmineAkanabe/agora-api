@@ -35,10 +35,18 @@ return [
     //     ],
     // ],
 
-    // Payment API
-    'kpay' => [
-        'secret'   => env('KPAY_SECRET_KEY'),
-        'base_url' => env('KPAY_BASE_URL', 'https://api.k-pay.app/v1'),
+    'payments' => [
+        'driver' => env('PAYMENT_DRIVER', 'local'),
+    ],
+
+    'campay' => [
+        'base_url' => env('CAMPAY_BASE_URL', 'https://demo.campay.net'),
+        'token' => env('CAMPAY_TOKEN'),
+        'username' => env('CAMPAY_USERNAME'),
+        'password' => env('CAMPAY_PASSWORD'),
+        'timeout' => env('CAMPAY_TIMEOUT', 20),
+        'connect_timeout' => env('CAMPAY_CONNECT_TIMEOUT', 10),
+        'fallback_to_local' => env('CAMPAY_FALLBACK_TO_LOCAL', false),
     ],
 
 ];

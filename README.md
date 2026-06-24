@@ -1,6 +1,6 @@
 # Agora API
 
-> **Agora** is a verified campus peer-to-peer marketplace REST API built with Laravel 13. It enables enrolled university students to buy and sell items securely within a closed, identity-verified community. The platform features escrow-based payments via K-PAY (MTN Mobile Money / Orange Money), pickup code delivery verification, dispute resolution, and a comprehensive admin panel.
+> **Agora** is a verified campus peer-to-peer marketplace REST API built with Laravel 13. It enables enrolled university students to buy and sell items securely within a closed, identity-verified community. The platform features escrow-based payments via Campay/local payment mode (MTN Mobile Money / Orange Money), pickup code delivery verification, dispute resolution, and a comprehensive admin panel.
 
 ---
 
@@ -30,7 +30,7 @@ Core features:
 - Student identity verification with admin approval flow
 - Product listings with multi-image support
 - Purchase request flow with seller approval
-- Escrow payments via K-PAY (funds held until delivery confirmed)
+- Escrow payments via Campay, with local demo mode available
 - 6-digit pickup code delivery verification
 - 48-hour auto-release safety net for escrow
 - In-app database notifications throughout all flows
@@ -52,7 +52,7 @@ Core features:
 | Database | PostgreSQL 18.0 |
 | Cache / Queue | Redis via Memurai |
 | Authentication | Laravel Sanctum |
-| Payment Gateway | K-PAY (MTN MoMo / Orange Money) |
+| Payment Gateway | Campay for MTN/Orange Mobile Money; local demo mode available |
 | Mail | Mailtrap (SMTP sandbox) |
 | Image Processing | Intervention Image for Laravel |
 | Search & Filter | Spatie Laravel Query Builder |
@@ -67,7 +67,7 @@ Core features:
 - Memurai (Redis for Windows) — latest version
 - Composer
 - A Mailtrap account (free sandbox)
-- A K-PAY account with API credentials
+- A Campay app token or Campay app username/password for live provider testing
 
 ---
 
@@ -137,9 +137,16 @@ MAIL_ENCRYPTION=null
 MAIL_FROM_ADDRESS=no-reply@agora.app
 MAIL_FROM_NAME="Agora"
 
-# K-PAY Payment Gateway
-KPAY_SECRET_KEY=kp_test_your_key
-KPAY_BASE_URL=https://api.k-pay.app/v1
+# Payment Mode
+# local confirms payments internally for demos and development.
+# campay uses the external Campay API.
+PAYMENT_DRIVER=local
+
+# Campay Payment Gateway
+CAMPAY_BASE_URL=https://demo.campay.net
+CAMPAY_TOKEN=
+CAMPAY_USERNAME=
+CAMPAY_PASSWORD=
 ```
 
 ---
@@ -226,8 +233,8 @@ php artisan queue:work
 ```
 
 The queue handles:
-- `PollPaymentStatusJob` — polls K-PAY every 15 seconds until payment resolves (max 10 minutes)
-- `DisbursePaymentJob` — triggers K-PAY payout to seller after pickup code is verified
+- `PollPaymentStatusJob` - polls Campay when `PAYMENT_DRIVER=campay`
+- `DisbursePaymentJob` - releases local escrow or triggers Campay withdrawal after pickup code verification
 - `VerificationApprovedMail` / `VerificationRejectedMail` — queued mail delivery
 
 **Start the scheduler** (keep this terminal open during development):
@@ -313,7 +320,7 @@ Register → Create Profile (upload matricule + ID card photo)
 ```
 Buyer submits purchase request
 → Seller approves (2-hour payment window opens)
-→ Buyer pays via K-PAY (MTN or Orange Money)
+-> Buyer pays through Campay or local demo mode (MTN or Orange)
 → Funds held in platform escrow
 → Buyer receives 6-digit pickup code
 → They meet on campus, buyer shows code
@@ -324,14 +331,14 @@ Buyer submits purchase request
 ### Escrow States
 | Status | Meaning |
 |---|---|
-| `initiated` | Payment triggered, waiting for K-PAY confirmation |
+| `initiated` | Payment triggered; transient in local mode, waiting for Campay confirmation in campay mode |
 | `held` | Payment confirmed, funds in escrow, pickup code generated |
 | `released` | Pickup code verified, funds disbursed to seller |
 | `refunded` | Funds returned to buyer |
 | `failed` | Payment could not be processed |
 
-### Payment Polling
-Agora does not use webhooks. Instead, after payment initiation, `PollPaymentStatusJob` is dispatched. It calls the K-PAY status endpoint every 15 seconds and gives up after 10 minutes, marking the transaction as failed if unresolved.
+### Payment Mode
+Agora defaults to `PAYMENT_DRIVER=local` for demos and development. In local mode, initiating a payment immediately places the transaction in escrow, generates a 6-digit pickup code, and sets the 48-hour auto-release timer. Set `PAYMENT_DRIVER=campay` to collect payment through Campay and poll Campay until the transaction becomes successful or failed.
 
 ### Notifications
 All in-app notifications are stored in the `notifications` table (Laravel database notifications). Emails are only sent for student verification approval and rejection events. Every other event (request approved, payment received, pickup code verified, dispute raised, etc.) uses database notifications only.

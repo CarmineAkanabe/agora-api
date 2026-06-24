@@ -565,7 +565,7 @@ Rate limited: 5 per minute.
 - Payment window (`expires_at`) must not be past
 - No existing transaction for this request
 
-> Dispatches `PollPaymentStatusJob` immediately after creation. The job polls K-PAY every 15 seconds for up to 10 minutes.
+> In local payment mode, the transaction is immediately moved to escrow, a 6-digit pickup code is generated, and the 48-hour auto-release timer starts. In Campay mode, the backend requests payment from Campay and polls Campay until the transaction becomes successful or failed.
 
 **Response `201`:** `TransactionResource`
 
@@ -1335,8 +1335,8 @@ All in-app notifications are stored in the `notifications` table. The `type` fie
 | `request_approved` | Seller approves request | Buyer |
 | `request_rejected` | Seller rejects request | Buyer |
 | `payment_initiated` | Buyer initiates payment | Buyer |
-| `payment_held` | K-PAY confirms payment | Buyer + Seller |
-| `payment_failed` | K-PAY payment fails | Buyer |
+| `payment_held` | Payment is confirmed by the active payment driver | Buyer + Seller |
+| `payment_failed` | Payment fails in the active payment driver | Buyer |
 | `pickup_code_verified` | Seller enters correct code | Buyer + Seller |
 | `escrow_released` | Funds disbursed to seller | Buyer + Seller |
 | `dispute_raised` | User raises a dispute | Other party |

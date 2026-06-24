@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enums\TransactionStatus;
 use App\Models\Transaction;
 use App\Services\EscrowService;
 use App\Services\PaymentService;
@@ -25,6 +26,12 @@ class PollPaymentStatusJob implements ShouldQueue
      */
     public function handle(PaymentService $paymentService, EscrowService $escrowService): void
     {
+        $this->transaction->refresh();
+
+        if ($this->transaction->status !== TransactionStatus::INITIATED) {
+            return;
+        }
+
         // Stop polling after 10 minutes
         if ($this->transaction->created_at->diffInMinutes(now()) > 10) {
             $paymentService->markFailed($this->transaction);

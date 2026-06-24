@@ -5,48 +5,66 @@ namespace App\Services;
 use App\Enums\TransactionStatus;
 use App\Models\PurchaseRequest;
 use App\Models\Transaction;
-use App\Notifications\PaymentFailedNotification;
-use App\Notifications\PaymentInitiatedNotification;
-use Http;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\RequestException;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 
 class PaymentService
 {
-
-    // Needed Variables
-    protected string $baseUrl;
-    protected string $secret;
+    protected string $driver;
+    protected string $campayBaseUrl;
+    protected ?string $campayToken;
+    protected ?string $campayUsername;
+    protected ?string $campayPassword;
+    protected int $campayTimeout;
+    protected int $campayConnectTimeout;
+    protected bool $campayFallbackToLocal;
 
     /**
      * Create a new class instance.
      */
-    public function __construct(protected NotificationService $notificationService)
-    {
-        $this->baseUrl = config('services.kpay.base_url');
-        $this->secret  = config('services.kpay.secret');
+    public function __construct(
+        protected NotificationService $notificationService,
+        protected EscrowService $escrowService,
+    ) {
+        $this->driver = config('services.payments.driver', 'local');
+        $this->campayBaseUrl = rtrim(config('services.campay.base_url'), '/');
+        $this->campayToken = config('services.campay.token');
+        $this->campayUsername = config('services.campay.username');
+        $this->campayPassword = config('services.campay.password');
+        $this->campayTimeout = (int) config('services.campay.timeout', 20);
+        $this->campayConnectTimeout = (int) config('services.campay.connect_timeout', 10);
+        $this->campayFallbackToLocal = (bool) config('services.campay.fallback_to_local', false);
     }
 
     public function initiate(PurchaseRequest $purchaseRequest, array $data): Transaction
     {
         $sellerPhone = $purchaseRequest->seller->studentProfile->phone;
+        $paymentReference = null;
+        $holdLocally = $this->driver === 'local';
 
-        // K-PAY collect call
-        $response = Http::withToken($this->secret)
-            ->post("{$this->baseUrl}/payments", [
-                'amount'   => $purchaseRequest->total_price,
-                'currency' => 'XAF',
-                'provider' => $data['payment_method'],
-                'customer' => $data['buyer_phone'],
-            ]);
+        if ($this->driver === 'campay') {
+            try {
+                $paymentReference = $this->initiateCampayPayment($purchaseRequest, $data);
+            } catch (ConnectionException|RequestException $exception) {
+                if (!$this->campayFallbackToLocal) {
+                    throw $exception;
+                }
 
-        // TODO: adjust field names once K-PAY docs are back online
-        $kpayData = $response->json();
+                report($exception);
+                $holdLocally = true;
+            }
+        }
 
         $transaction = Transaction::create([
             'purchase_request_id' => $purchaseRequest->id,
             'buyer_id'            => $purchaseRequest->buyer_id,
             'seller_id'           => $purchaseRequest->seller_id,
             'amount'              => $purchaseRequest->total_price,
-            'kpay_payment_id'     => $kpayData['id'] ?? null,
+            'kpay_payment_id'     => $paymentReference,
             'status'              => TransactionStatus::INITIATED,
             'payment_method'      => $data['payment_method'],
             'buyer_phone'         => $data['buyer_phone'],
@@ -55,34 +73,75 @@ class PaymentService
 
         $this->notificationService->paymentInitiated($purchaseRequest->buyer);
 
-        // $purchaseRequest->buyer->notify(new PaymentInitiatedNotification());
+        if ($holdLocally) {
+            $this->escrowService->hold($transaction);
+
+            return $transaction->fresh();
+        }
 
         return $transaction;
     }
 
-    public function checkStatus(string $kpayPaymentId): string
+    public function checkStatus(?string $paymentReference): string
     {
-        $response = Http::withToken($this->secret)
-            ->get("{$this->baseUrl}/payments/{$kpayPaymentId}");
+        if ($this->driver === 'local') {
+            return 'successful';
+        }
 
-        // TODO: adjust status field name once K-PAY docs are back online
-        return $response->json()['status'] ?? 'pending';
+        if ($this->driver !== 'campay' || !$paymentReference) {
+            return 'failed';
+        }
+
+        try {
+            $response = $this->campayRequest()
+                ->get("{$this->campayBaseUrl}/api/transaction/{$paymentReference}/")
+                ->throw()
+                ->json();
+        } catch (ConnectionException|RequestException $exception) {
+            report($exception);
+
+            return $this->campayFallbackToLocal ? 'successful' : 'pending';
+        }
+
+        return match (strtoupper($response['status'] ?? 'FAILED')) {
+            'PENDING', 'PROCESSING' => 'pending',
+            'SUCCESSFUL' => 'successful',
+            default => 'failed',
+        };
     }
 
     public function disburse(Transaction $transaction): void
     {
-        // TODO: confirm disburse endpoint from K-PAY docs
-        $response = Http::withToken($this->secret)
-            ->post("{$this->baseUrl}/disbursements", [
-                'amount'    => $transaction->amount,
-                'currency'  => 'XAF',
-                'recipient' => $transaction->seller_phone,
-            ]);
+        if ($this->driver === 'local') {
+            return;
+        }
 
-        $kpayData = $response->json();
+        if ($this->driver !== 'campay') {
+            return;
+        }
+
+        try {
+            $response = $this->campayRequest()
+                ->post("{$this->campayBaseUrl}/api/withdraw/", [
+                    'amount' => $this->formatAmount($transaction->amount),
+                    'to' => $this->formatCameroonPhone($transaction->seller_phone),
+                    'description' => "Agora payout for transaction #{$transaction->id}",
+                    'external_reference' => (string) Str::uuid(),
+                ])
+                ->throw()
+                ->json();
+        } catch (ConnectionException|RequestException $exception) {
+            if (!$this->campayFallbackToLocal) {
+                throw $exception;
+            }
+
+            report($exception);
+
+            return;
+        }
 
         $transaction->update([
-            'kpay_disburse_id' => $kpayData['id'] ?? null,
+            'kpay_disburse_id' => $response['reference'] ?? null,
         ]);
     }
 
@@ -91,6 +150,73 @@ class PaymentService
         $transaction->update(['status' => TransactionStatus::FAILED]);
 
         $this->notificationService->paymentFailed($transaction->buyer);
-        // $transaction->buyer->notify(new PaymentFailedNotification());
+    }
+
+    private function initiateCampayPayment(PurchaseRequest $purchaseRequest, array $data): ?string
+    {
+        $response = $this->campayRequest()
+            ->post("{$this->campayBaseUrl}/api/collect/", [
+                'amount' => $this->formatAmount($purchaseRequest->total_price),
+                'currency' => 'XAF',
+                'from' => $this->formatCameroonPhone($data['buyer_phone']),
+                'description' => "Agora purchase request #{$purchaseRequest->id}",
+                'external_reference' => (string) Str::uuid(),
+                'external_user' => (string) $purchaseRequest->buyer_id,
+            ])
+            ->throw()
+            ->json();
+
+        return $response['reference'] ?? null;
+    }
+
+    private function campayRequest(): PendingRequest
+    {
+        return Http::acceptJson()
+            ->asJson()
+            ->timeout($this->campayTimeout)
+            ->connectTimeout($this->campayConnectTimeout)
+            ->withHeaders([
+                'Authorization' => 'Token '.$this->campayAccessToken(),
+            ]);
+    }
+
+    private function campayAccessToken(): string
+    {
+        if ($this->campayToken) {
+            return $this->campayToken;
+        }
+
+        return Cache::remember('campay:access_token', now()->addMinutes(50), function () {
+            $response = Http::acceptJson()
+                ->asJson()
+                ->timeout($this->campayTimeout)
+                ->connectTimeout($this->campayConnectTimeout)
+                ->post("{$this->campayBaseUrl}/api/token/", [
+                    'username' => $this->campayUsername,
+                    'password' => $this->campayPassword,
+                ])
+                ->throw()
+                ->json();
+
+            return $response['token'];
+        });
+    }
+
+    private function formatAmount(mixed $amount): string
+    {
+        return (string) (int) round((float) $amount);
+    }
+
+    private function formatCameroonPhone(string $phone): string
+    {
+        $phone = preg_replace('/\D+/', '', $phone) ?? '';
+
+        if (str_starts_with($phone, '237')) {
+            return $phone;
+        }
+
+        $phone = ltrim($phone, '0');
+
+        return '237'.$phone;
     }
 }

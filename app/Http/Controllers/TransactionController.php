@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\TransactionStatus;
 use App\Http\Requests\Transactions\InitiatePaymentRequest;
 use App\Http\Resources\TransactionResource;
 use App\Jobs\PollPaymentStatusJob;
@@ -48,7 +49,9 @@ class TransactionController extends Controller
             $request->validated()
         );
 
-        PollPaymentStatusJob::dispatch($transaction);
+        if ($transaction->status === TransactionStatus::INITIATED) {
+            PollPaymentStatusJob::dispatch($transaction);
+        }
 
         return response()->json(new TransactionResource($transaction), 201);
     }
